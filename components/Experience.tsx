@@ -232,13 +232,17 @@ export default function Experience() {
           <a href="#">Region</a>
           <a href="#">Contacts</a>
         </motion.div>
-        <motion.div className="logo" style={{ opacity: navLeft }}>
-          <svg className="crest" viewBox="0 0 40 22" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M4 18 L8 6 L14 12 L20 3 L26 12 L32 6 L36 18 Z" />
-            <path d="M4 20 H36" />
-          </svg>
-          GRAPESSY
-          <small>VINEYARDS</small>
+        <motion.div className="logo" style={{ opacity: navLeft, top: "2vh" }}>
+          <img
+            src="/logo.png"
+            alt="Esterházy Austria"
+            style={{
+              width: "clamp(85px, 7vw, 110px)",
+              height: "auto",
+              filter: "invert(1) brightness(1.9)",
+              display: "block",
+            }}
+          />
         </motion.div>
         <div className="right" style={{ gap: "24px", alignItems: "center" }}>
           <span className="lang"><b>En</b> <span style={{ opacity: 0.45 }}>/ Fr</span></span>
@@ -407,7 +411,7 @@ export default function Experience() {
           className="abs"
           initial={{ y: "-120vh" }}
           animate={{ y: hasLoaded ? "0vh" : "-120vh" }}
-          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
           style={{
             inset: 0,
             opacity: bOp,

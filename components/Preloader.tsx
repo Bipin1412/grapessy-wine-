@@ -25,11 +25,11 @@ export default function Preloader({ onComplete }: PreloaderProps) {
       if (rawProgress < 100) {
         requestAnimationFrame(update);
       } else {
-        // Hold briefly at 100% so user sees full glass
+        // Hold briefly at 100% so user sees full glass, then trigger curtain slide-up
         setTimeout(() => {
           setIsDone(true);
           onComplete();
-        }, 250);
+        }, 300);
       }
     };
 
@@ -41,9 +41,9 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     <AnimatePresence>
       {!isDone && (
         <motion.div
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ y: "0%" }}
+          exit={{ y: "-100%" }}
+          transition={{ duration: 0.95, ease: [0.76, 0, 0.24, 1] }}
           style={{
             position: "fixed",
             inset: 0,
@@ -128,7 +128,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
             <span
               style={{
                 fontFamily: "var(--sans)",
-                fontSize: "13px",
+                fontSize: "14px",
                 fontWeight: 500,
                 letterSpacing: "0.02em",
                 color: "#1e1814",
@@ -140,8 +140,20 @@ export default function Preloader({ onComplete }: PreloaderProps) {
             </span>
           </div>
 
-          {/* Bottom spacing placeholder */}
-          <div style={{ height: "40px" }} />
+          {/* Bottom text: Passion and culture loading... */}
+          <div style={{ paddingBottom: "2vh" }}>
+            <span
+              style={{
+                fontFamily: "var(--sans)",
+                fontSize: "13px",
+                color: "#1e1814",
+                opacity: 0.8,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Passion and culture loading...
+            </span>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
