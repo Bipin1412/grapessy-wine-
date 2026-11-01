@@ -38,3 +38,16 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
   .nav { font-size: 11px; padding: 14px; }
   .logo { font-size: 9px; }
 }
+
+@keyframes loaderWave {
+  0% {
+    transform: translate(0);
+  }
+  100% {
+    transform: translate(42px);
+  }
+}
+
+.anim-loader-wave {
+  animation: loaderWave 1500ms ease-in-out infinite;
+}

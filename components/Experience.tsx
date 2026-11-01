@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
+import Preloader from "./Preloader";
 import { motion, useScroll, useSpring, useTransform, useMotionTemplate, MotionValue } from "framer-motion";
 import Bottle from "./Bottle";
 import Bottle3D from "./Bottle3D";
@@ -93,6 +94,20 @@ function Tile({ p, name, box, op, z = 1 }: { p: P; name: any; box: { l: MotionVa
 }
 
 export default function Experience() {
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!hasLoaded) {
+      document.body.style.overflow = "hidden";
+      window.scrollTo(0, 0);
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [hasLoaded]);
+
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const p = useSpring(scrollYProgress, { stiffness: 180, damping: 28, mass: 0.18 });
@@ -209,6 +224,7 @@ export default function Experience() {
 
   return (
     <div ref={ref} style={{ height: `${(TOTAL + 1) * 100}vh`, position: "relative" }}>
+      <Preloader onComplete={() => setHasLoaded(true)} />
       {/* ---- fixed chrome ---- */}
       <motion.nav className="nav" style={{ color: navColor, padding: "2.5vh 4vw" }}>
         <motion.div className="left" style={{ opacity: navLeft, gap: "4px" }}>
@@ -389,13 +405,15 @@ export default function Experience() {
         {/* Authentic 3D Bottle - Continuous unified model from Hero through Showcase */}
         <motion.div
           className="abs"
+          initial={{ y: "-120vh" }}
+          animate={{ y: hasLoaded ? "0vh" : "-120vh" }}
+          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
           style={{
             inset: 0,
             opacity: bOp,
             pointerEvents: "none",
             zIndex: 5,
-          }}
-        >
+          }}>
           <Bottle3D rotation={bSpin} tilt={bTilt} xOffset={bX} yOffset={bY} zoom={bZoom} />
         </motion.div>
 
