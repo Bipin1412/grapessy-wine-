@@ -18,7 +18,7 @@ const useS = <T,>(p: P, keys: number[], vals: T[]) =>
 const fade = (p: P, a: number, b: number, c: number, d: number) => useS(p, [a, b, c, d], [0, 1, 1, 0]);
 
 const STATEMENT =
-  "Grapessy Vineyards crafts exceptional wines inspired by heritage and art. Klimt wines continue this legacy with timeless passion.".split(" ");
+  "The Esterházy family has shaped Austrian culture for centuries. KLIMT wines continue this legacy, inspired by Gustav Klimt's The Kiss.".split(" ");
 
 const WINES = [
   {
@@ -42,8 +42,8 @@ const WINES = [
 ];
 
 function Word({ p, i, w }: { p: P; i: number; w: string }) {
-  const a = 1.3 + (i / STATEMENT.length) * 0.9;
-  const color = useS(p, [a, a + 0.18], ["rgba(29,23,25,0.22)", "rgba(29,23,25,1)"]);
+  const a = 1.2 + (i / STATEMENT.length) * 0.9;
+  const color = useS(p, [a, a + 0.16], ["rgba(25, 23, 20, 0.22)", "rgba(25, 23, 20, 1)"]);
   return <motion.span style={{ color }}>{w} </motion.span>;
 }
 
@@ -99,7 +99,7 @@ export default function Experience() {
 
   /* ---------- page background ---------- */
   const bg = useS(p, [0, 1.2, 2.4, 3.2, 4.0, 4.6, 5.4, 6.0, 6.8, 7.4],
-    ["#d6aeb6", "#e8c7ce", "#e8c7ce", "#e6c6b2", "#e6c6b2", "#dcb36b", "#dcb36b", "#dd8793", "#dd8793", "#e8c5cd"]);
+    ["#181311", "#cfc6bd", "#cfc6bd", "#d6caa8", "#d6caa8", "#dcb36b", "#dcb36b", "#dd8793", "#dd8793", "#e8c5cd"]);
   const heroOverlay = useS(p, [0.15, 1.3], [1, 0]);
 
   /* ---------- nav ---------- */
@@ -114,11 +114,11 @@ export default function Experience() {
   const vineScale = useS(p, [0, 1.0], [1, 1.12]);
 
   /* ---------- bottle: single continuous 3D model from hero through showcase ---------- */
-  /* bottle tilt: upright in hero, tilts into statement with neck pointing up-right (-36deg / 36deg), then straightens upright for showcase */
+  /* bottle tilt: upright in hero, tilts into statement with neck pointing up-right at 45deg, then straightens upright for showcase */
   const bTilt = useS(
     p,
     [0, 0.7, 1.4, 2.4, 3.1, 7.0],
-    [0, 0, 36, 36, 0, 0]
+    [0, 0, 45, 45, 0, 0]
   );
 
   /* bottle spin around Y (degrees):
@@ -142,8 +142,8 @@ export default function Experience() {
   const stOp = fade(p, 0.9, 1.3, 2.3, 2.7);
 
   /* ---------- pill ---------- */
-  const pillOp = useS(p, [0, 0.8, 1.2, 2.6, 3.0, 6.8, 7.1, 9.2, 9.5], [1, 1, 0, 0, 1, 1, 0, 0, 0]);
-  const pillY = useS(p, [0, 0.8, 1.2, 2.6, 3.0], [0, 0, 20, 20, 0]);
+  const pillOp = useS(p, [0, 6.8, 7.2], [1, 1, 0]);
+  const pillY = useS(p, [0, 6.8], [0, 0]);
 
   /* ---------- pour ---------- */
   const t1 = fade(p, 7.2, 7.6, 8.2, 8.5);
@@ -332,11 +332,44 @@ export default function Experience() {
         </motion.div>
 
         {/* statement */}
-        <motion.div className="abs" style={{ inset: 0, opacity: stOp, pointerEvents: "none" }}>
-          <div className="abs" style={{ top: "3.5vh", width: "100%", textAlign: "center", fontSize: "max(9px,0.5vw)" }}>Behind the brand</div>
-          <p className="abs" style={{ left: "50%", top: "13vh", width: "38vw", transform: "translateX(-50%)", textAlign: "center", fontSize: "max(17px,1.65vw)", lineHeight: 1.12, letterSpacing: "-0.015em", fontWeight: 400 }}>
-            {STATEMENT.map((w, i) => <Word key={i} p={p} i={i} w={w} />)}
-          </p>
+        <motion.div className="abs" style={{ inset: 0, opacity: stOp, pointerEvents: "none", zIndex: 3 }}>
+          <div
+            className="abs"
+            style={{
+              top: "2.5vh",
+              width: "100%",
+              textAlign: "center",
+              fontSize: "max(11px, 0.72vw)",
+              letterSpacing: "0.02em",
+              color: "#191714",
+              fontWeight: 400,
+            }}
+          >
+            Behind the brand
+          </div>
+          <div
+            className="abs"
+            style={{
+              left: "50%",
+              top: "48%",
+              transform: "translate(-50%, -50%)",
+              width: "min(90vw, 1076px)",
+              textAlign: "center",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "clamp(28px, 3.89vw, 56px)",
+                lineHeight: 1.05,
+                letterSpacing: "-0.02em",
+                fontWeight: 400,
+                margin: 0,
+                textAlign: "center",
+              }}
+            >
+              {STATEMENT.map((w, i) => <Word key={i} p={p} i={i} w={w} />)}
+            </h2>
+          </div>
         </motion.div>
 
         {/* wines */}
