@@ -37,7 +37,7 @@ const WINES = [
     n: "03", title: "Red Blend", tag: "Dry Red", years: "2023-2025", name: "Klimt Red Blend",
     notes: "Dark ruby red - black cherries - ripe plums - dark chocolate - fruity and juicy style - smooth tannins.",
     desc: "A juicy, expressive red blend offering dark berries, soft spices and a velvety finish. Harmonious and modern in style, celebrating timeless artistry.",
-    win: [5.9, 6.3, 6.9, 7.3],
+    win: [5.9, 6.3, 6.65, 6.95],
   },
 ];
 
@@ -98,8 +98,8 @@ export default function Experience() {
   const p = useSpring(scrollYProgress, { stiffness: 180, damping: 28, mass: 0.18 });
 
   /* ---------- page background ---------- */
-  const bg = useS(p, [0, 1.2, 2.4, 3.2, 4.0, 4.6, 5.4, 6.0, 6.8, 7.4],
-    ["#181311", "#cfc6bd", "#cfc6bd", "#d6caa8", "#d6caa8", "#dcb36b", "#dcb36b", "#dd8793", "#dd8793", "#e8c5cd"]);
+  const bg = useS(p, [0, 1.2, 2.4, 3.2, 4.0, 4.6, 5.4, 6.0, 6.7, 7.1, 9.4, 10.0],
+    ["#181311", "#cfc6bd", "#cfc6bd", "#d6caa8", "#d6caa8", "#dcb36b", "#dcb36b", "#c89ba3", "#cfc6bd", "#cfc6bd", "#cfc6bd", "#181311"]);
   const heroOverlay = useS(p, [0.15, 1.3], [1, 0]);
 
   /* ---------- nav ---------- */
@@ -114,11 +114,11 @@ export default function Experience() {
   const vineScale = useS(p, [0, 1.0], [1, 1.12]);
 
   /* ---------- bottle: single continuous 3D model from hero through showcase ---------- */
-  /* bottle tilt: upright in hero, tilts into statement with neck pointing up-right at 45deg, then straightens upright for showcase */
+  /* bottle tilt: upright in hero, tilts into statement with neck pointing up-right at 45deg, straightens upright for showcase, then tilts into pour */
   const bTilt = useS(
     p,
-    [0, 0.7, 1.4, 2.4, 3.1, 7.0],
-    [0, 0, 45, 45, 0, 0]
+    [0, 0.7, 1.4, 2.4, 3.1, 6.6, 7.05],
+    [0, 0, 45, 45, 0, 0, -22]
   );
 
   /* bottle spin around Y (degrees):
@@ -142,18 +142,18 @@ export default function Experience() {
   const stOp = fade(p, 0.9, 1.3, 2.3, 2.7);
 
   /* ---------- pill ---------- */
-  const pillOp = useS(p, [0, 6.8, 7.2], [1, 1, 0]);
-  const pillY = useS(p, [0, 6.8], [0, 0]);
+  const pillOp = useS(p, [0, 9.2, 9.5], [1, 1, 0]);
+  const pillY = useS(p, [0, 9.2], [0, 0]);
 
   /* ---------- pour ---------- */
-  const t1 = fade(p, 7.2, 7.6, 8.2, 8.5);
-  const t2 = fade(p, 8.4, 8.7, 9.2, 9.5);
+  const t1 = fade(p, 7.05, 7.35, 7.95, 8.25);
+  const t2 = fade(p, 8.15, 8.45, 9.15, 9.45);
   const glassOp = useS(p, [7.2, 7.7, 9.0, 9.4], [0, 1, 1, 0]);
   const glassY = useS(p, [7.2, 7.7, 9.0, 9.4], [14, 0, 0, -6]);
   const glassYt = useMotionTemplate`${glassY}vh`;
   const level = useS(p, [7.95, 9.0], [0, 72]);
   const levelT = useMotionTemplate`${level}%`;
-  const stream = useS(p, [7.1, 9.1], [0, 1]);
+  const stream = useS(p, [7.0, 9.1], [0, 1]);
   const streamOp = useS(p, [6.95, 7.15, 9.2, 9.5], [0, 1, 1, 0]);
 
   /* ---------- collage ---------- */
@@ -388,24 +388,65 @@ export default function Experience() {
           <Bottle3D rotation={bSpin} tilt={bTilt} />
         </motion.div>
 
-        {/* pour */}
-        <motion.div className="abs" style={{ inset: 0, opacity: t1, pointerEvents: "none", zIndex: 6 }}>
-          <p className="abs" style={{ left: "28vw", top: "52vh", transform: "translateX(-50%)", width: "16vw", textAlign: "center", color: "#fff", fontSize: "max(13px,1.1vw)", lineHeight: 1.12 }}>
-            The culture that shaped the spirit
-          </p>
+        {/* pour text behind bottle & glass */}
+        <motion.div
+          className="abs"
+          style={{
+            inset: 0,
+            opacity: t1,
+            pointerEvents: "none",
+            zIndex: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: "var(--sans)",
+              fontSize: "clamp(36px, 4.5vw, 68px)",
+              lineHeight: 1.05,
+              letterSpacing: "-0.025em",
+              fontWeight: 400,
+              color: "#ffffff",
+              textAlign: "center",
+              margin: 0,
+            }}
+          >
+            The culture<br />shaped the spirit
+          </h2>
         </motion.div>
-        <motion.div className="abs" style={{ inset: 0, opacity: t2, pointerEvents: "none", zIndex: 6 }}>
-          <p className="abs" style={{ left: "28vw", top: "52vh", transform: "translateX(-50%)", width: "16vw", textAlign: "center", color: "#fff", fontSize: "max(13px,1.1vw)", lineHeight: 1.12 }}>
-            Together, they shaped Klimt Wines
-          </p>
+        <motion.div
+          className="abs"
+          style={{
+            inset: 0,
+            opacity: t2,
+            pointerEvents: "none",
+            zIndex: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: "var(--sans)",
+              fontSize: "clamp(36px, 4.5vw, 68px)",
+              lineHeight: 1.05,
+              letterSpacing: "-0.025em",
+              fontWeight: 400,
+              color: "#ffffff",
+              textAlign: "center",
+              margin: 0,
+            }}
+          >
+            Together, they<br />shaped KLIMT
+          </h2>
         </motion.div>
         {/* photorealistic pouring stream and crystal wine glass */}
         <RealPour
           streamProgress={stream}
           streamOp={streamOp}
-          glassOp={glassOp}
-          glassY={glassYt}
-          levelProgress={level}
         />
 
         {/* collage */}

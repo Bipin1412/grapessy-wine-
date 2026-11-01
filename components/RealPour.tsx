@@ -106,35 +106,26 @@ export default function RealPour({
         opacity: streamOp,
         pointerEvents: "none",
         zIndex: 5,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
       }}
     >
-      <div
+      <canvas
+        ref={canvasRef}
+        width={1920}
+        height={1080}
         style={{
-          position: "relative",
+          position: "absolute",
+          inset: 0,
           width: "100vw",
           height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
+          objectFit: "cover",
+          objectPosition: "center center",
+          display: "block",
+          pointerEvents: "none",
         }}
-      >
-        <canvas
-          ref={canvasRef}
-          width={1920}
-          height={1080}
-          style={{
-            width: "100vw",
-            height: "100vh",
-            objectFit: "contain",
-            display: "block",
-            pointerEvents: "none",
-          }}
-        />
-      </div>
+      />
     </motion.div>
   );
 }
