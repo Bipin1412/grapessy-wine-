@@ -37,7 +37,7 @@ const WINES = [
     n: "03", title: "Red Blend", tag: "Dry Red", years: "2023-2025", name: "Klimt Red Blend",
     notes: "Dark ruby red - black cherries - ripe plums - dark chocolate - fruity and juicy style - smooth tannins.",
     desc: "A juicy, expressive red blend offering dark berries, soft spices and a velvety finish. Harmonious and modern in style, celebrating timeless artistry.",
-    win: [5.9, 6.3, 6.65, 6.95],
+    win: [5.9, 6.3, 6.6, 6.85],
   },
 ];
 
@@ -98,7 +98,7 @@ export default function Experience() {
   const p = useSpring(scrollYProgress, { stiffness: 180, damping: 28, mass: 0.18 });
 
   /* ---------- page background ---------- */
-  const bg = useS(p, [0, 1.2, 2.4, 3.2, 4.0, 4.6, 5.4, 6.0, 6.7, 7.1, 9.4, 10.0],
+  const bg = useS(p, [0, 1.2, 2.4, 3.2, 4.0, 4.6, 5.4, 6.0, 6.6, 6.85, 9.35, 9.8],
     ["#181311", "#cfc6bd", "#cfc6bd", "#d6caa8", "#d6caa8", "#dcb36b", "#dcb36b", "#c89ba3", "#cfc6bd", "#cfc6bd", "#cfc6bd", "#181311"]);
   const heroOverlay = useS(p, [0.15, 1.3], [1, 0]);
 
@@ -135,26 +135,26 @@ export default function Experience() {
     [0, 0, 180, 360, 360, 360, 720, 720, 1080, 1080]
   );
 
-  /* bottle opacity: visible from p=0 (Hero) through showcase until 6.92 - strictly 0 before pour begins */
-  const bOp = useS(p, [0, 6.7, 6.92], [1, 1, 0]);
+  /* bottle opacity: visible from p=0 (Hero) through showcase until 6.85 - strictly 0 before pour begins */
+  const bOp = useS(p, [0, 6.65, 6.85], [1, 1, 0]);
 
   /* ---------- statement ---------- */
   const stOp = fade(p, 0.9, 1.3, 2.3, 2.7);
 
   /* ---------- pill ---------- */
-  const pillOp = useS(p, [0, 9.2, 9.5], [1, 1, 0]);
-  const pillY = useS(p, [0, 9.2], [0, 0]);
+  const pillOp = useS(p, [0, 9.25, 9.55], [1, 1, 0]);
+  const pillY = useS(p, [0, 9.25], [0, 0]);
 
   /* ---------- pour ---------- */
-  const t1 = fade(p, 7.05, 7.35, 7.95, 8.25);
-  const t2 = fade(p, 8.15, 8.45, 9.15, 9.45);
+  const t1 = fade(p, 6.95, 7.25, 7.9, 8.2);
+  const t2 = fade(p, 8.2, 8.5, 9.15, 9.4);
   const glassOp = useS(p, [7.2, 7.7, 9.0, 9.4], [0, 1, 1, 0]);
   const glassY = useS(p, [7.2, 7.7, 9.0, 9.4], [14, 0, 0, -6]);
   const glassYt = useMotionTemplate`${glassY}vh`;
   const level = useS(p, [7.95, 9.0], [0, 72]);
   const levelT = useMotionTemplate`${level}%`;
-  const stream = useS(p, [7.15, 9.15], [0, 1]);
-  const streamOp = useS(p, [6.95, 7.15, 9.2, 9.5], [0, 1, 1, 0]);
+  const stream = useS(p, [6.88, 9.25], [0, 1]);
+  const streamOp = useS(p, [6.85, 6.95, 9.35, 9.6], [0, 1, 1, 0]);
 
   /* ---------- collage ---------- */
   const cK = [9.5, 10.2, 11.0, 11.6, 12.6];

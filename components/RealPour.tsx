@@ -31,37 +31,36 @@ export default function RealPour({
     return img;
   };
 
-  // Preload initial batch on idle, and full batch when approaching pour section
+  // Preload frames aggressively upfront so scrubbing is 100% fluid with 0 lag
   useEffect(() => {
-    // Preload first 10 frames on idle so initial transition is immediate
-    const preloadTimer = setTimeout(() => {
-      for (let i = 0; i < 15; i++) {
+    // Immediately load frame 0
+    loadFrame(0);
+
+    // Preload remaining frames in fast non-blocking batches
+    let cur = 1;
+    let cancelled = false;
+    const preloadNextBatch = () => {
+      if (cancelled) return;
+      const limit = Math.min(cur + 8, TOTAL_FRAMES);
+      for (let i = cur; i < limit; i++) {
         loadFrame(i);
       }
-    }, 1200);
-
-    // Watch streamProgress to preload remaining frames when user scrolls towards pour
-    const unsub = streamProgress.on("change", (p) => {
-      if (p > 0.05 && !hasStartedLoading) {
-        setHasStartedLoading(true);
-        // Load remaining frames in small non-blocking batches
-        let cur = 15;
-        const interval = setInterval(() => {
-          const limit = Math.min(cur + 15, TOTAL_FRAMES);
-          for (let i = cur; i < limit; i++) {
-            loadFrame(i);
-          }
-          cur = limit;
-          if (cur >= TOTAL_FRAMES) clearInterval(interval);
-        }, 60);
+      cur = limit;
+      if (cur < TOTAL_FRAMES) {
+        if (typeof requestIdleCallback === "function") {
+          requestIdleCallback(preloadNextBatch);
+        } else {
+          setTimeout(preloadNextBatch, 16);
+        }
       }
-    });
-
-    return () => {
-      clearTimeout(preloadTimer);
-      unsub();
     };
-  }, [hasStartedLoading, streamProgress]);
+
+    const timer = setTimeout(preloadNextBatch, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, []);
 
   // Map streamProgress (0..1) to frame index 0..134
   const frameIndex = useTransform(streamProgress, (v) => {
