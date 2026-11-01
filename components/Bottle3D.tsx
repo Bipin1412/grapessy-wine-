@@ -119,6 +119,8 @@ export default function Bottle3D({
     const bottleGroup = new THREE.Group();
     scene.add(bottleGroup);
     bottleGroupRef.current = bottleGroup;
+    (window as any)._bottleGroup = bottleGroup;
+    (window as any)._requestRender = requestRender;
 
     // Load authentic front and back label textures
     const textureLoader = new THREE.TextureLoader();
@@ -309,6 +311,8 @@ export default function Bottle3D({
       root.scale.set(finalScale, finalScale, finalScale);
 
       bottleGroup.add(root);
+      (window as any)._root = root;
+      (window as any)._baseScale = baseScale;
 
       // Set initial rotation, position, and variant
       const initialDeg = typeof rotation === "number" ? rotation : rotation.get();

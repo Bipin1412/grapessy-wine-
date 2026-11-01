@@ -121,24 +121,16 @@ export default function Experience() {
     [0, 0, 45, 45, 0, 0, -22]
   );
 
-  /* bottle zoom: 1.0 in hero & showcase, smoothly zooms in (comes closer to screen) after 3rd product to connect into close-up */
+  /* bottle zoom: 1.0 in hero & showcase, smoothly zooms in on the neck after 3rd product to connect into close-up */
   const bZoom = useS(
     p,
     [0, 6.4, 6.88],
-    [1.0, 1.0, 1.85]
+    [1.0, 1.0, 1.38]
   );
 
-  /* bottle translation: glides smoothly into the close-up pose */
-  const bX = useS(
-    p,
-    [0, 6.4, 6.88],
-    [0, 0, 0.12]
-  );
-  const bY = useS(
-    p,
-    [0, 6.4, 6.88],
-    [0, 0, 0.18]
-  );
+  /* bottle translation: glides smoothly so the zoom focuses directly on the neck and cap, matching frame 2 */
+  const bX = useS(p, [0, 6.4, 6.88], [0, 0, 0.02]);
+  const bY = useS(p, [0, 6.4, 6.88], [0, 0, -0.16]);
 
   /* bottle spin around Y (degrees):
      p = 0..0.7: 0 (Hero front)
