@@ -95,7 +95,7 @@ function Tile({ p, name, box, op, z = 1 }: { p: P; name: any; box: { l: MotionVa
 export default function Experience() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
-  const p = useSpring(scrollYProgress, { stiffness: 110, damping: 28, mass: 0.6 });
+  const p = useSpring(scrollYProgress, { stiffness: 180, damping: 28, mass: 0.18 });
 
   /* ---------- page background ---------- */
   const bg = useS(p, [0, 1.2, 2.4, 3.2, 4.0, 4.6, 5.4, 6.0, 6.8, 7.4],

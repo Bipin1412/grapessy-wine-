@@ -16,6 +16,7 @@ export default function HeroBranch3D() {
     const container = containerRef.current;
     if (!container) return;
 
+    const isMobile = typeof window !== "undefined" && (window.innerWidth < 768 || window.matchMedia("(pointer: coarse)").matches);
     let width = container.clientWidth || window.innerWidth;
     let height = container.clientHeight || window.innerHeight;
 
@@ -28,16 +29,26 @@ export default function HeroBranch3D() {
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: !isMobile,
       alpha: true,
       powerPreference: "high-performance",
+      precision: isMobile ? "mediump" : "highp",
+      depth: true,
+      stencil: false,
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.25 : 1.75));
     renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
+    container.innerHTML = "";
     container.appendChild(renderer.domElement);
+
+    let isVisible = true;
+    let needsRender = true;
+    const requestRender = () => {
+      needsRender = true;
+    };
 
     // Environment Lighting with HDR
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
@@ -50,6 +61,7 @@ export default function HeroBranch3D() {
         scene.environment = envMap;
         hdrTexture.dispose();
         pmremGenerator.dispose();
+        requestRender();
       },
       undefined,
       () => {
@@ -62,6 +74,7 @@ export default function HeroBranch3D() {
         const dir2 = new THREE.DirectionalLight(0xb0c4de, 1.2);
         dir2.position.set(-4, -2, 2);
         scene.add(dir2);
+        requestRender();
       }
     );
 
@@ -99,28 +112,28 @@ export default function HeroBranch3D() {
           ? { width: 1920, height: 1080, bottleBounds: { x: 867.33, y: 159.2, width: 185.33, height: 805.33 } }
           : w < 1024
           ? { width: 1920, height: 1080, bottleBounds: { x: 867.33, y: 159.2, width: 185.33, height: 805.33 } }
-          : { width: 1920, height: 1080, bottleBounds: { x: 867.33, y: 107.92, width: 185.33, height: 805.33 } };
+          : { width: 1920, height: 1080, bottleBounds: { x: 867.33, y: 159.2, width: 185.33, height: 805.33 } };
 
-      const factor = Math.max(w / ref.width, h / ref.height);
-      const a = ref.width * factor;
-      const s = ref.height * factor;
-      const o = vh / Math.max(1, h);
+      const i = Math.max(w / ref.width, h / ref.height);
+      const a = ref.width * i;
+      const l = ref.height * i;
+      const c = vh / Math.max(1, h);
 
-      const l = (w - a) / 2 + (ref.bottleBounds.x + ref.bottleBounds.width / 2) * factor;
-      const u = (h - s) / 2 + (ref.bottleBounds.y + ref.bottleBounds.height / 2) * factor;
-      const c = ref.bottleBounds.height * factor * o;
+      // Bottle visual center
+      const bottleCenterX = ((w - a) / 2 + (ref.bottleBounds.x + ref.bottleBounds.width / 2) * i - w / 2) * c;
+      const bottleCenterY = -(((h - l) / 2 + (ref.bottleBounds.y + ref.bottleBounds.height / 2) * i - h / 2) * c);
 
-      const posX = (l - w / 2) * o;
-      const posY =
-        -(u - h / 2) * o +
-        vh * (w < 768 ? 0.112 : w < 1440 ? 0.055 : 0.025) -
-        (c * (w < 768 ? 0.75 : w < 1024 ? 0.846 : w < 1440 ? 0.94 : 0.9)) / 2 +
-        0.012 * vh;
+      // Calibrated offsets for continuous organic curve behind bottle
+      const xOffset = w < 768 ? 0.35 : 0.45;
+      const yOffset = w < 768 ? -0.1 : -0.15;
 
-      branchGroup.position.set(posX, posY, 0);
+      branchGroup.position.set(bottleCenterX + xOffset, bottleCenterY + yOffset, 0);
+      requestRender();
     };
 
-    // Load branch_v1.glb with DRACO
+    updateTransform();
+
+    // Draco + GLTF loader with Draco WASM decoder
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("/draco/");
 
@@ -169,23 +182,52 @@ export default function HeroBranch3D() {
       (err) => console.error("Error loading branch_v1.glb:", err)
     );
 
-    // Mouse sway tracking
+    // Mouse sway tracking on desktop only
     let targetRotY = 0;
     const handleMouseMove = (e: MouseEvent) => {
+      if (!isVisible) return;
       const normX = e.clientX / window.innerWidth;
       targetRotY = (normX * 2 - 1) * MAX_SWAY;
+      requestRender();
     };
-    window.addEventListener("mousemove", handleMouseMove);
+    if (!isMobile) {
+      window.addEventListener("mousemove", handleMouseMove);
+    }
 
-    // Animation loop
+    // Scroll listener to PAUSE rendering when scrolled past Hero
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const heroMax = window.innerHeight * 1.1;
+      const nowVisible = scrollY < heroMax;
+      if (nowVisible !== isVisible) {
+        isVisible = nowVisible;
+        if (isVisible) requestRender();
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    // Animation loop: only renders when visible and needed
     let animId: number;
+    let idleFrames = 0;
     const animate = () => {
       animId = requestAnimationFrame(animate);
 
-      // Smooth sway interpolation
-      branchGroup.rotation.y += (BASE_ROTATION[1] + targetRotY - branchGroup.rotation.y) * 0.05;
+      if (!isVisible) return;
 
-      renderer.render(scene, camera);
+      const diff = Math.abs(BASE_ROTATION[1] + targetRotY - branchGroup.rotation.y);
+      if (diff > 0.0005) {
+        branchGroup.rotation.y += (BASE_ROTATION[1] + targetRotY - branchGroup.rotation.y) * 0.05;
+        needsRender = true;
+        idleFrames = 0;
+      } else if (idleFrames < 10) {
+        idleFrames++;
+        needsRender = true;
+      }
+
+      if (needsRender) {
+        renderer.render(scene, camera);
+        needsRender = false;
+      }
     };
     animate();
 
@@ -202,7 +244,8 @@ export default function HeroBranch3D() {
 
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener("mousemove", handleMouseMove);
+      if (!isMobile) window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
       dracoLoader.dispose();
       renderer.dispose();

@@ -21,7 +21,7 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
   const materialsRef = useRef<{
     cover: THREE.MeshStandardMaterial[];
     glass: THREE.MeshPhysicalMaterial[];
-    wine: THREE.MeshPhysicalMaterial[];
+    wine: THREE.MeshStandardMaterial[];
     frontLabel: THREE.MeshStandardMaterial[];
     backLabel: THREE.MeshStandardMaterial[];
   }>({
@@ -40,64 +40,35 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
 
   const activeVariantRef = useRef<"gruner" | "white" | "red">("gruner");
 
-  const applyVariant = (variant: "gruner" | "white" | "red") => {
-    if (activeVariantRef.current === variant) return;
-    activeVariantRef.current = variant;
-
-    const { cover, glass, wine, frontLabel } = materialsRef.current;
-    const textures = texturesRef.current;
-
-    if (variant === "gruner") {
-      cover.forEach((m) => m.color.setHex(0x8fa876)); // mint green capsule
-      glass.forEach((m) => m.color.setHex(0x241d08));
-      wine.forEach((m) => m.color.setHex(0x846e22));
-      if (textures.grunerFront) {
-        frontLabel.forEach((m) => {
-          m.map = textures.grunerFront!;
-          m.needsUpdate = true;
-        });
-      }
-    } else if (variant === "white") {
-      cover.forEach((m) => m.color.setHex(0xcca31e)); // gold yellow capsule
-      glass.forEach((m) => m.color.setHex(0x28200b));
-      wine.forEach((m) => m.color.setHex(0xa2842c));
-      if (textures.whiteFront) {
-        frontLabel.forEach((m) => {
-          m.map = textures.whiteFront!;
-          m.needsUpdate = true;
-        });
-      }
-    } else if (variant === "red") {
-      cover.forEach((m) => m.color.setHex(0x181818)); // matte black capsule
-      glass.forEach((m) => m.color.setHex(0x0c0406)); // deep dark ruby glass
-      wine.forEach((m) => m.color.setHex(0x32030a)); // deep ruby wine
-      if (textures.redFront) {
-        frontLabel.forEach((m) => {
-          m.map = textures.redFront!;
-          m.needsUpdate = true;
-        });
-      }
-    }
-  };
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     let width = container.clientWidth || window.innerWidth;
     let height = container.clientHeight || window.innerHeight;
 
+    let needsRender = true;
+    const requestRender = () => {
+      needsRender = true;
+    };
+
     const scene = new THREE.Scene();
-    // Match official Klimt perspective camera: FOV 34 at [0, 0, 6.1]
+    // Official Klimt perspective camera: FOV 34 at [0, 0, 6.1]
     const camera = new THREE.PerspectiveCamera(34, width / height, 0.1, 100);
     camera.position.set(0, 0, 6.1);
 
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: !isMobile,
       alpha: true,
       powerPreference: "high-performance",
+      precision: isMobile ? "mediump" : "highp",
+      depth: true,
+      stencil: false,
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Mobile DPR capping eliminates GPU fill-rate throttling
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.25 : 1.75));
     renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -112,6 +83,7 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       scene.environment = pmrem.fromEquirectangular(hdr).texture;
       hdr.dispose();
       pmrem.dispose();
+      requestRender();
     });
 
     // Studio Lights
@@ -130,20 +102,61 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
 
     // Load label textures
     const textureLoader = new THREE.TextureLoader();
-    const grunerTex = textureLoader.load("/label-gruner.png");
+    const grunerTex = textureLoader.load("/label-gruner.png", requestRender);
     grunerTex.colorSpace = THREE.SRGBColorSpace;
     grunerTex.flipY = false;
     texturesRef.current.grunerFront = grunerTex;
 
-    const whiteTex = textureLoader.load("/label-white.png");
+    const whiteTex = textureLoader.load("/label-white.png", requestRender);
     whiteTex.colorSpace = THREE.SRGBColorSpace;
     whiteTex.flipY = false;
     texturesRef.current.whiteFront = whiteTex;
 
-    const redTex = textureLoader.load("/label-red.png");
+    const redTex = textureLoader.load("/label-red.png", requestRender);
     redTex.colorSpace = THREE.SRGBColorSpace;
     redTex.flipY = false;
     texturesRef.current.redFront = redTex;
+
+    const applyVariant = (variant: "gruner" | "white" | "red") => {
+      if (activeVariantRef.current === variant && materialsRef.current.cover.length > 0) return;
+      activeVariantRef.current = variant;
+
+      const { cover, glass, wine, frontLabel } = materialsRef.current;
+      const textures = texturesRef.current;
+
+      if (variant === "gruner") {
+        cover.forEach((m) => m.color.setHex(0x8fa876));
+        glass.forEach((m) => m.color.setHex(0x28200c));
+        wine.forEach((m) => m.color.setHex(0x846e22));
+        if (textures.grunerFront) {
+          frontLabel.forEach((m) => {
+            m.map = textures.grunerFront!;
+            m.needsUpdate = true;
+          });
+        }
+      } else if (variant === "white") {
+        cover.forEach((m) => m.color.setHex(0xd4a017));
+        glass.forEach((m) => m.color.setHex(0x2a220e));
+        wine.forEach((m) => m.color.setHex(0xa2842c));
+        if (textures.whiteFront) {
+          frontLabel.forEach((m) => {
+            m.map = textures.whiteFront!;
+            m.needsUpdate = true;
+          });
+        }
+      } else if (variant === "red") {
+        cover.forEach((m) => m.color.setHex(0x181818));
+        glass.forEach((m) => m.color.setHex(0x12080a));
+        wine.forEach((m) => m.color.setHex(0x38060f));
+        if (textures.redFront) {
+          frontLabel.forEach((m) => {
+            m.map = textures.redFront!;
+            m.needsUpdate = true;
+          });
+        }
+      }
+      requestRender();
+    };
 
     // Load Draco GLB
     const dracoLoader = new DRACOLoader();
@@ -161,27 +174,27 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
           mesh.frustumCulled = false;
 
           if (mesh.name === "BOTTLE") {
+            // Klimt official high-speed glass (transmission: 0 stops GPU readPixels stalls!)
             const mat = new THREE.MeshPhysicalMaterial({
-              color: 0x241d08,
-              roughness: 0.14,
-              transmission: 0.88,
-              transparent: true,
-              opacity: 0.94,
-              reflectivity: 0.65,
+              color: 0x28200c,
+              roughness: 0.16,
+              metalness: 0.05,
+              transmission: 0,
+              transparent: false,
               clearcoat: 0.95,
               clearcoatRoughness: 0.08,
-              ior: 1.5,
+              reflectivity: 0.65,
+              envMapIntensity: 1.25,
             });
             mesh.material = mat;
             materialsRef.current.glass.push(mat);
           } else if (mesh.name === "WINE") {
-            const mat = new THREE.MeshPhysicalMaterial({
+            // High-speed wine material
+            const mat = new THREE.MeshStandardMaterial({
               color: 0x846e22,
-              roughness: 0.22,
-              transmission: 0.72,
-              transparent: true,
-              opacity: 0.92,
-              ior: 1.34,
+              roughness: 0.25,
+              metalness: 0.1,
+              envMapIntensity: 0.8,
             });
             mesh.material = mat;
             materialsRef.current.wine.push(mat);
@@ -230,13 +243,12 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
 
       // Center model horizontally and vertically with generous breathing room above pill
       root.position.x = -center.x;
-      root.position.y = -center.y + 0.32;
+      root.position.y = -center.y + (isMobile ? 0.22 : 0.32);
       root.position.z = -center.z;
 
-      // Scale bottle so height is exactly 70% of viewport height
-      // Leaves ~15% padding above and ~15% padding below so the full bottle and bottom punt are 100% visible!
+      // Scale bottle to fit comfortably in viewport (70% on desktop, 65% on mobile)
       const vh = 2 * camera.position.z * Math.tan(((camera.fov * Math.PI) / 180) / 2);
-      const scale = (vh * 0.70) / size.y;
+      const scale = (vh * (isMobile ? 0.65 : 0.70)) / size.y;
       root.scale.set(scale, scale, scale);
 
       bottleGroup.add(root);
@@ -258,6 +270,7 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       } else {
         applyVariant("red");
       }
+      requestRender();
     });
 
     // Real-time 60fps rotation binding & seamless back-of-spin variant swap
@@ -275,6 +288,7 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
         } else {
           applyVariant("red");
         }
+        requestRender();
       });
     }
 
@@ -284,6 +298,7 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       unsubscribeTilt = tilt.on("change", (latestTilt) => {
         if (bottleGroupRef.current) {
           bottleGroupRef.current.rotation.z = (-latestTilt * Math.PI) / 180;
+          requestRender();
         }
       });
     }
@@ -294,14 +309,22 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       unsubscribeY = yOffset.on("change", (latestY) => {
         if (bottleGroupRef.current) {
           bottleGroupRef.current.position.y = latestY;
+          requestRender();
         }
       });
     }
 
+    // Render-on-demand loop: only executes draw call when scene changes (0% idle GPU usage!)
     let animId: number;
+    let renderCount = 0;
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      renderer.render(scene, camera);
+      // Ensure initial frames render completely as textures settle
+      if (needsRender || renderCount < 10) {
+        renderer.render(scene, camera);
+        needsRender = false;
+        renderCount++;
+      }
     };
     animate();
 
@@ -312,6 +335,7 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      requestRender();
     };
     window.addEventListener("resize", handleResize);
 

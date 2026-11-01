@@ -18,28 +18,50 @@ export default function RealPour({
   streamOp,
 }: RealPourProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const imagesRef = useRef<HTMLImageElement[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const imagesRef = useRef<(HTMLImageElement | null)[]>(new Array(TOTAL_FRAMES).fill(null));
+  const [hasStartedLoading, setHasStartedLoading] = useState(false);
 
-  // Preload all 135 frames of the full 3D uncap + pour sequence
+  // Load a single frame by index on demand
+  const loadFrame = (idx: number) => {
+    if (imagesRef.current[idx]) return imagesRef.current[idx];
+    const img = new Image();
+    const numStr = idx.toString().padStart(3, "0");
+    img.src = `/klimt_full_pour/frame_${numStr}.webp`;
+    imagesRef.current[idx] = img;
+    return img;
+  };
+
+  // Preload initial batch on idle, and full batch when approaching pour section
   useEffect(() => {
-    let loadedCount = 0;
-    const imgs: HTMLImageElement[] = [];
+    // Preload first 10 frames on idle so initial transition is immediate
+    const preloadTimer = setTimeout(() => {
+      for (let i = 0; i < 15; i++) {
+        loadFrame(i);
+      }
+    }, 1200);
 
-    for (let i = 0; i < TOTAL_FRAMES; i++) {
-      const img = new Image();
-      const numStr = i.toString().padStart(3, "0");
-      img.src = `/klimt_full_pour/frame_${numStr}.webp`;
-      img.onload = () => {
-        loadedCount++;
-        if (loadedCount >= 5 && !isLoaded) {
-          setIsLoaded(true);
-        }
-      };
-      imgs.push(img);
-    }
-    imagesRef.current = imgs;
-  }, []);
+    // Watch streamProgress to preload remaining frames when user scrolls towards pour
+    const unsub = streamProgress.on("change", (p) => {
+      if (p > 0.05 && !hasStartedLoading) {
+        setHasStartedLoading(true);
+        // Load remaining frames in small non-blocking batches
+        let cur = 15;
+        const interval = setInterval(() => {
+          const limit = Math.min(cur + 15, TOTAL_FRAMES);
+          for (let i = cur; i < limit; i++) {
+            loadFrame(i);
+          }
+          cur = limit;
+          if (cur >= TOTAL_FRAMES) clearInterval(interval);
+        }, 60);
+      }
+    });
+
+    return () => {
+      clearTimeout(preloadTimer);
+      unsub();
+    };
+  }, [hasStartedLoading, streamProgress]);
 
   // Map streamProgress (0..1) to frame index 0..134
   const frameIndex = useTransform(streamProgress, (v) => {
@@ -51,22 +73,30 @@ export default function RealPour({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
     const render = () => {
       const idx = frameIndex.get();
-      const img = imagesRef.current[idx];
-      if (img && img.complete) {
+      let img = imagesRef.current[idx];
+      if (!img) {
+        img = loadFrame(idx);
+      }
+      if (img && img.complete && img.naturalWidth > 0) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      } else if (img) {
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img!, 0, 0, canvas.width, canvas.height);
+        };
       }
     };
 
     render();
     const unsub = frameIndex.on("change", render);
     return () => unsub();
-  }, [isLoaded, frameIndex]);
+  }, [frameIndex]);
 
   return (
     <motion.div
