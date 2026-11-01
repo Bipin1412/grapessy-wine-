@@ -10,13 +10,22 @@ import { MotionValue } from "framer-motion";
 interface Bottle3DProps {
   rotation: MotionValue<number> | number;
   tilt?: MotionValue<number> | number;
+  xOffset?: MotionValue<number> | number;
   yOffset?: MotionValue<number> | number;
+  zoom?: MotionValue<number> | number;
 }
 
-export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DProps) {
+export default function Bottle3D({
+  rotation,
+  tilt = 0,
+  xOffset = 0,
+  yOffset = 0,
+  zoom = 1,
+}: Bottle3DProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bottleGroupRef = useRef<THREE.Group | null>(null);
   const rootMeshRef = useRef<THREE.Group | null>(null);
+  const baseScaleRef = useRef<number>(1);
 
   const materialsRef = useRef<{
     cover: THREE.MeshStandardMaterial[];
@@ -293,17 +302,23 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
 
       // Scale bottle to fit comfortably in viewport (70% on desktop, 65% on mobile)
       const vh = 2 * camera.position.z * Math.tan(((camera.fov * Math.PI) / 180) / 2);
-      const scale = (vh * (isMobile ? 0.65 : 0.70)) / size.y;
-      root.scale.set(scale, scale, scale);
+      const baseScale = (vh * (isMobile ? 0.65 : 0.70)) / size.y;
+      baseScaleRef.current = baseScale;
+      const initialZoom = typeof zoom === "number" ? zoom : zoom.get ? zoom.get() : 1;
+      const finalScale = baseScale * initialZoom;
+      root.scale.set(finalScale, finalScale, finalScale);
 
       bottleGroup.add(root);
 
-      // Set initial rotation and variant
+      // Set initial rotation, position, and variant
       const initialDeg = typeof rotation === "number" ? rotation : rotation.get();
       bottleGroup.rotation.y = (initialDeg * Math.PI) / 180;
 
       const initialTilt = typeof tilt === "number" ? tilt : tilt.get ? tilt.get() : 0;
       bottleGroup.rotation.z = (-initialTilt * Math.PI) / 180;
+
+      const initialX = typeof xOffset === "number" ? xOffset : xOffset.get ? xOffset.get() : 0;
+      bottleGroup.position.x = initialX;
 
       const initialY = typeof yOffset === "number" ? yOffset : yOffset.get ? yOffset.get() : 0;
       bottleGroup.position.y = initialY;
@@ -352,12 +367,35 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       });
     }
 
+    // Real-time horizontal X offset binding
+    let unsubscribeX: (() => void) | undefined;
+    if (typeof xOffset !== "number" && typeof xOffset.on === "function") {
+      unsubscribeX = xOffset.on("change", (latestX) => {
+        if (bottleGroupRef.current) {
+          bottleGroupRef.current.position.x = latestX;
+          requestRender();
+        }
+      });
+    }
+
     // Real-time vertical Y offset binding
     let unsubscribeY: (() => void) | undefined;
     if (typeof yOffset !== "number" && typeof yOffset.on === "function") {
       unsubscribeY = yOffset.on("change", (latestY) => {
         if (bottleGroupRef.current) {
           bottleGroupRef.current.position.y = latestY;
+          requestRender();
+        }
+      });
+    }
+
+    // Real-time zoom / scale binding
+    let unsubscribeZoom: (() => void) | undefined;
+    if (typeof zoom !== "number" && typeof zoom.on === "function") {
+      unsubscribeZoom = zoom.on("change", (latestZoom) => {
+        if (rootMeshRef.current) {
+          const s = baseScaleRef.current * latestZoom;
+          rootMeshRef.current.scale.set(s, s, s);
           requestRender();
         }
       });
@@ -390,7 +428,9 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       window.removeEventListener("resize", handleResize);
       if (unsubscribeRotation) unsubscribeRotation();
       if (unsubscribeTilt) unsubscribeTilt();
+      if (unsubscribeX) unsubscribeX();
       if (unsubscribeY) unsubscribeY();
+      if (unsubscribeZoom) unsubscribeZoom();
       renderer.dispose();
     };
   }, []);

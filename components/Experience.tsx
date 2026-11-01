@@ -114,11 +114,30 @@ export default function Experience() {
   const vineScale = useS(p, [0, 1.0], [1, 1.12]);
 
   /* ---------- bottle: single continuous 3D model from hero through showcase ---------- */
-  /* bottle tilt: upright in hero, tilts into statement with neck pointing up-right at 45deg, then straightens upright for showcase */
+  /* bottle tilt: upright in hero, tilts into statement with neck pointing up-right at 45deg, straightens upright for showcase, then leans diagonally (-22deg) as it zooms in after 3rd product */
   const bTilt = useS(
     p,
-    [0, 0.7, 1.4, 2.4, 3.1, 7.0],
-    [0, 0, 45, 45, 0, 0]
+    [0, 0.7, 1.4, 2.4, 3.1, 6.4, 6.88],
+    [0, 0, 45, 45, 0, 0, -22]
+  );
+
+  /* bottle zoom: 1.0 in hero & showcase, smoothly zooms in (comes closer to screen) after 3rd product to connect into close-up */
+  const bZoom = useS(
+    p,
+    [0, 6.4, 6.88],
+    [1.0, 1.0, 1.85]
+  );
+
+  /* bottle translation: glides smoothly into the close-up pose */
+  const bX = useS(
+    p,
+    [0, 6.4, 6.88],
+    [0, 0, 0.12]
+  );
+  const bY = useS(
+    p,
+    [0, 6.4, 6.88],
+    [0, 0, 0.18]
   );
 
   /* bottle spin around Y (degrees):
@@ -135,8 +154,8 @@ export default function Experience() {
     [0, 0, 180, 360, 360, 360, 720, 720, 1080, 1080]
   );
 
-  /* bottle opacity: visible from p=0 (Hero) through showcase until 6.85 - strictly 0 before pour begins */
-  const bOp = useS(p, [0, 6.65, 6.85], [1, 1, 0]);
+  /* bottle opacity: visible from p=0 (Hero) through showcase and zoom-in, handoff to pour at 6.87 */
+  const bOp = useS(p, [0, 6.85, 6.87], [1, 1, 0]);
 
   /* ---------- statement ---------- */
   const stOp = fade(p, 0.9, 1.3, 2.3, 2.7);
@@ -154,7 +173,7 @@ export default function Experience() {
   const level = useS(p, [7.95, 9.0], [0, 72]);
   const levelT = useMotionTemplate`${level}%`;
   const stream = useS(p, [6.88, 9.25], [0, 1]);
-  const streamOp = useS(p, [6.85, 6.95, 9.35, 9.6], [0, 1, 1, 0]);
+  const streamOp = useS(p, [6.87, 6.89, 9.35, 9.6], [0, 1, 1, 0]);
 
   /* ---------- collage ---------- */
   const cK = [9.5, 10.2, 11.0, 11.6, 12.6];
@@ -385,7 +404,7 @@ export default function Experience() {
             zIndex: 5,
           }}
         >
-          <Bottle3D rotation={bSpin} tilt={bTilt} />
+          <Bottle3D rotation={bSpin} tilt={bTilt} xOffset={bX} yOffset={bY} zoom={bZoom} />
         </motion.div>
 
         {/* pour text behind bottle & glass */}
