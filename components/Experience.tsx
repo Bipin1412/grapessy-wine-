@@ -114,11 +114,11 @@ export default function Experience() {
   const vineScale = useS(p, [0, 1.0], [1, 1.12]);
 
   /* ---------- bottle: single continuous 3D model from hero through showcase ---------- */
-  /* bottle tilt: upright in hero, tilts into statement with neck pointing up-right at 45deg, straightens upright for showcase, then tilts into pour */
+  /* bottle tilt: upright in hero, tilts into statement with neck pointing up-right at 45deg, then straightens upright for showcase */
   const bTilt = useS(
     p,
-    [0, 0.7, 1.4, 2.4, 3.1, 6.6, 7.05],
-    [0, 0, 45, 45, 0, 0, -22]
+    [0, 0.7, 1.4, 2.4, 3.1, 7.0],
+    [0, 0, 45, 45, 0, 0]
   );
 
   /* bottle spin around Y (degrees):
@@ -135,8 +135,8 @@ export default function Experience() {
     [0, 0, 180, 360, 360, 360, 720, 720, 1080, 1080]
   );
 
-  /* bottle opacity: visible from p=0 (Hero) through showcase until pour sequence (p=7.0) */
-  const bOp = useS(p, [0, 6.95, 7.15], [1, 1, 0]);
+  /* bottle opacity: visible from p=0 (Hero) through showcase until 6.92 - strictly 0 before pour begins */
+  const bOp = useS(p, [0, 6.7, 6.92], [1, 1, 0]);
 
   /* ---------- statement ---------- */
   const stOp = fade(p, 0.9, 1.3, 2.3, 2.7);
@@ -153,7 +153,7 @@ export default function Experience() {
   const glassYt = useMotionTemplate`${glassY}vh`;
   const level = useS(p, [7.95, 9.0], [0, 72]);
   const levelT = useMotionTemplate`${level}%`;
-  const stream = useS(p, [7.0, 9.1], [0, 1]);
+  const stream = useS(p, [7.15, 9.15], [0, 1]);
   const streamOp = useS(p, [6.95, 7.15, 9.2, 9.5], [0, 1, 1, 0]);
 
   /* ---------- collage ---------- */
