@@ -31,6 +31,7 @@ export default function HeroBranch3D() {
     const renderer = new THREE.WebGLRenderer({
       antialias: !isMobile,
       alpha: true,
+      preserveDrawingBuffer: true,
       powerPreference: "high-performance",
       precision: isMobile ? "mediump" : "highp",
       depth: true,
@@ -45,9 +46,9 @@ export default function HeroBranch3D() {
     container.appendChild(renderer.domElement);
 
     let isVisible = true;
-    let needsRender = true;
+    let renderCount = 0;
     const requestRender = () => {
-      needsRender = true;
+      renderCount = 0;
     };
 
     // Environment Lighting with HDR
@@ -206,9 +207,8 @@ export default function HeroBranch3D() {
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    // Animation loop: only renders when visible and needed
+    // Animation loop: renders bursts on interaction/asset load then idles at 0% GPU
     let animId: number;
-    let idleFrames = 0;
     const animate = () => {
       animId = requestAnimationFrame(animate);
 
@@ -217,16 +217,12 @@ export default function HeroBranch3D() {
       const diff = Math.abs(BASE_ROTATION[1] + targetRotY - branchGroup.rotation.y);
       if (diff > 0.0005) {
         branchGroup.rotation.y += (BASE_ROTATION[1] + targetRotY - branchGroup.rotation.y) * 0.05;
-        needsRender = true;
-        idleFrames = 0;
-      } else if (idleFrames < 10) {
-        idleFrames++;
-        needsRender = true;
+        renderCount = 0;
       }
 
-      if (needsRender) {
+      if (renderCount < 30) {
         renderer.render(scene, camera);
-        needsRender = false;
+        renderCount++;
       }
     };
     animate();
@@ -247,7 +243,6 @@ export default function HeroBranch3D() {
       if (!isMobile) window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
-      dracoLoader.dispose();
       renderer.dispose();
       if (container && renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);

@@ -36,6 +36,9 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
     grunerFront?: THREE.Texture;
     whiteFront?: THREE.Texture;
     redFront?: THREE.Texture;
+    grunerBack?: THREE.Texture;
+    whiteBack?: THREE.Texture;
+    redBack?: THREE.Texture;
   }>({});
 
   const activeVariantRef = useRef<"gruner" | "white" | "red">("gruner");
@@ -48,9 +51,12 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
     let width = container.clientWidth || window.innerWidth;
     let height = container.clientHeight || window.innerHeight;
 
-    let needsRender = true;
+    (window as any).THREE_DRACOLoader = DRACOLoader;
+    (window as any).THREE_GLTFLoader = GLTFLoader;
+
+    let renderCount = 0;
     const requestRender = () => {
-      needsRender = true;
+      renderCount = 0;
     };
 
     const scene = new THREE.Scene();
@@ -61,6 +67,7 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
     const renderer = new THREE.WebGLRenderer({
       antialias: !isMobile,
       alpha: true,
+      preserveDrawingBuffer: true,
       powerPreference: "high-performance",
       precision: isMobile ? "mediump" : "highp",
       depth: true,
@@ -84,6 +91,10 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       hdr.dispose();
       pmrem.dispose();
       requestRender();
+    },
+    undefined,
+    (err) => {
+      console.error("--- HDR LOAD ERROR ---", err);
     });
 
     // Studio Lights
@@ -100,28 +111,43 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
     scene.add(bottleGroup);
     bottleGroupRef.current = bottleGroup;
 
-    // Load label textures
+    // Load authentic front and back label textures
     const textureLoader = new THREE.TextureLoader();
-    const grunerTex = textureLoader.load("/label-gruner.png", requestRender);
+    const grunerTex = textureLoader.load("/textures/gruner_front.webp", requestRender);
     grunerTex.colorSpace = THREE.SRGBColorSpace;
     grunerTex.flipY = false;
     texturesRef.current.grunerFront = grunerTex;
 
-    const whiteTex = textureLoader.load("/label-white.png", requestRender);
+    const whiteTex = textureLoader.load("/textures/white_front.webp", requestRender);
     whiteTex.colorSpace = THREE.SRGBColorSpace;
     whiteTex.flipY = false;
     texturesRef.current.whiteFront = whiteTex;
 
-    const redTex = textureLoader.load("/label-red.png", requestRender);
+    const redTex = textureLoader.load("/textures/red_front.webp", requestRender);
     redTex.colorSpace = THREE.SRGBColorSpace;
     redTex.flipY = false;
     texturesRef.current.redFront = redTex;
+
+    const grunerBackTex = textureLoader.load("/textures/gruner_back.webp", requestRender);
+    grunerBackTex.colorSpace = THREE.SRGBColorSpace;
+    grunerBackTex.flipY = false;
+    texturesRef.current.grunerBack = grunerBackTex;
+
+    const whiteBackTex = textureLoader.load("/textures/white_back.webp", requestRender);
+    whiteBackTex.colorSpace = THREE.SRGBColorSpace;
+    whiteBackTex.flipY = false;
+    texturesRef.current.whiteBack = whiteBackTex;
+
+    const redBackTex = textureLoader.load("/textures/red_back.webp", requestRender);
+    redBackTex.colorSpace = THREE.SRGBColorSpace;
+    redBackTex.flipY = false;
+    texturesRef.current.redBack = redBackTex;
 
     const applyVariant = (variant: "gruner" | "white" | "red") => {
       if (activeVariantRef.current === variant && materialsRef.current.cover.length > 0) return;
       activeVariantRef.current = variant;
 
-      const { cover, glass, wine, frontLabel } = materialsRef.current;
+      const { cover, glass, wine, frontLabel, backLabel } = materialsRef.current;
       const textures = texturesRef.current;
 
       if (variant === "gruner") {
@@ -131,6 +157,12 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
         if (textures.grunerFront) {
           frontLabel.forEach((m) => {
             m.map = textures.grunerFront!;
+            m.needsUpdate = true;
+          });
+        }
+        if (textures.grunerBack) {
+          backLabel.forEach((m) => {
+            m.map = textures.grunerBack!;
             m.needsUpdate = true;
           });
         }
@@ -144,6 +176,12 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
             m.needsUpdate = true;
           });
         }
+        if (textures.whiteBack) {
+          backLabel.forEach((m) => {
+            m.map = textures.whiteBack!;
+            m.needsUpdate = true;
+          });
+        }
       } else if (variant === "red") {
         cover.forEach((m) => m.color.setHex(0x181818));
         glass.forEach((m) => m.color.setHex(0x12080a));
@@ -151,6 +189,12 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
         if (textures.redFront) {
           frontLabel.forEach((m) => {
             m.map = textures.redFront!;
+            m.needsUpdate = true;
+          });
+        }
+        if (textures.redBack) {
+          backLabel.forEach((m) => {
+            m.map = textures.redBack!;
             m.needsUpdate = true;
           });
         }
@@ -165,6 +209,7 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
     gltfLoader.setDRACOLoader(dracoLoader);
 
     gltfLoader.load("/3d/new_bottle-draco.glb", (gltf) => {
+      console.log("--- BOTTLE GLB LOADED SUCCESSFULLY ---");
       const root = gltf.scene;
       rootMeshRef.current = root;
 
@@ -220,9 +265,9 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
             materialsRef.current.frontLabel.push(mat);
           } else if (mesh.name === "LABEL_VELTLINER_BACK") {
             const mat = new THREE.MeshStandardMaterial({
-              color: 0x141210,
-              roughness: 0.55,
-              metalness: 0.2,
+              map: grunerBackTex,
+              roughness: 0.7,
+              metalness: 0.15,
               transparent: true,
               depthWrite: false,
               polygonOffset: true,
@@ -263,14 +308,18 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       const initialY = typeof yOffset === "number" ? yOffset : yOffset.get ? yOffset.get() : 0;
       bottleGroup.position.y = initialY;
 
-      if (initialDeg < 180) {
+      if (initialDeg < 540) {
         applyVariant("gruner");
-      } else if (initialDeg < 540) {
+      } else if (initialDeg < 900) {
         applyVariant("white");
       } else {
         applyVariant("red");
       }
       requestRender();
+    },
+    undefined,
+    (err) => {
+      console.error("--- BOTTLE GLB LOAD ERROR ---", err);
     });
 
     // Real-time 60fps rotation binding & seamless back-of-spin variant swap
@@ -281,9 +330,9 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
           bottleGroupRef.current.rotation.y = (latestDeg * Math.PI) / 180;
         }
 
-        if (latestDeg < 180) {
+        if (latestDeg < 540) {
           applyVariant("gruner");
-        } else if (latestDeg < 540) {
+        } else if (latestDeg < 900) {
           applyVariant("white");
         } else {
           applyVariant("red");
@@ -314,15 +363,12 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       });
     }
 
-    // Render-on-demand loop: only executes draw call when scene changes (0% idle GPU usage!)
+    // Render-on-demand loop: executes short 30-frame bursts on change then idles at 0% GPU
     let animId: number;
-    let renderCount = 0;
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      // Ensure initial frames render completely as textures settle
-      if (needsRender || renderCount < 10) {
+      if (renderCount < 30) {
         renderer.render(scene, camera);
-        needsRender = false;
         renderCount++;
       }
     };
@@ -346,7 +392,6 @@ export default function Bottle3D({ rotation, tilt = 0, yOffset = 0 }: Bottle3DPr
       if (unsubscribeTilt) unsubscribeTilt();
       if (unsubscribeY) unsubscribeY();
       renderer.dispose();
-      dracoLoader.dispose();
     };
   }, []);
 

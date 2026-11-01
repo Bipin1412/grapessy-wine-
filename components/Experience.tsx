@@ -113,41 +113,30 @@ export default function Experience() {
   const vineOp = useS(p, [0, 1.0], [1, 0]);
   const vineScale = useS(p, [0, 1.0], [1, 1.12]);
 
-  /* ---------- bottle ---------- */
-  const bK = [0, 0.9, 1.6, 2.6, 3.0, 6.4, 7.0];
-  const bRot = useS(p, bK, [0, 0, 34, 34, 0, 0, 0]);
-  const bX = useS(p, bK, [0, 0, 4, 4, 0, 0, 0]);
-  const bY = useS(p, bK, [3.5, 3.5, 26, 26, 7.5, 7.5, 7.5]);
-  const bH = useS(p, bK, [83, 83, 105, 105, 78, 78, 78]);
-  const bOp = useS(p, [6.95, 7.15], [1, 0]);
-  const bXt = useMotionTemplate`${bX}vw`;
-  const bYt = useMotionTemplate`${bY}vh`;
-  const bHt = useMotionTemplate`${bH}vh`;
-  const bWt = useTransform(bH, (h) => `${(h * 175) / 751}vh`);
+  /* ---------- bottle: single continuous 3D model from hero through showcase ---------- */
+  /* bottle tilt: upright in hero, tilts into statement with neck pointing up-right (-36deg / 36deg), then straightens upright for showcase */
+  const bTilt = useS(
+    p,
+    [0, 0.7, 1.4, 2.4, 3.1, 7.0],
+    [0, 0, 36, 36, 0, 0]
+  );
 
-  /* bottle spin across the 3 product showcase */
+  /* bottle spin around Y (degrees):
+     p = 0..0.7: 0 (Hero front)
+     p = 1.4: 180 (Statement entry - BACK LABEL with barcode & Austrian details faces user!)
+     p = 2.4: 360 (Statement exit - front rotates back into view)
+     p = 3.1..4.1: 360 (01 Grüner showcase upright front)
+     p = 4.1..4.9: 360 -> 720 (Spin to 02 White Blend, switches at 540)
+     p = 5.5..6.3: 720 -> 1080 (Spin to 03 Red Blend, switches at 900)
+  */
   const bSpin = useS(
     p,
-    [0, 4.1, 4.5, 4.9, 5.5, 5.9, 6.3, 7.0],
-    [0, 0, 180, 360, 360, 540, 720, 720]
+    [0, 0.7, 1.4, 2.4, 3.1, 4.1, 4.9, 5.5, 6.3, 7.0],
+    [0, 0, 180, 360, 360, 360, 720, 720, 1080, 1080]
   );
-  const bSpinDeg = useMotionTemplate`${bSpin}deg`;
 
-  /* Front face is visible when facing the user; back face is visible when turned between 90 deg and 270 deg */
-  const backOp = useS(
-    p,
-    [4.28, 4.32, 4.68, 4.72, 5.68, 5.72, 6.08, 6.12],
-    [0, 1, 1, 0, 0, 1, 1, 0]
-  );
-  const frontOp = useTransform(backOp, (v) => 1 - v);
-
-  const gOp = useS(p, [4.45, 4.55], [1, 0]);
-  const wOp = useS(p, [4.45, 4.55, 5.85, 5.95], [0, 1, 1, 0]);
-  const rOp = useS(p, [5.85, 5.95], [0, 1]);
-  const openBottleOp = useS(p, [6.9, 7.4], [0, 1]);
-  const closedBottleOp = useTransform(openBottleOp, (v) => 1 - v);
-  const isHero = useS(p, [0, 0.9, 1.4], [1, 1, 0]);
-  const isShowcase = useS(p, [0.9, 1.4, 6.9, 7.2], [0, 1, 1, 0]);
+  /* bottle opacity: visible from p=0 (Hero) through showcase until pour sequence (p=7.0) */
+  const bOp = useS(p, [0, 6.95, 7.15], [1, 1, 0]);
 
   /* ---------- statement ---------- */
   const stOp = fade(p, 0.9, 1.3, 2.3, 2.7);
@@ -353,44 +342,17 @@ export default function Experience() {
         {/* wines */}
         {WINES.map((w) => <Wine key={w.n} p={p} w={w} />)}
 
-        {/* Authentic 3D Bottle in Statement & Showcase (100% full bottle visible, zero clipping, zero plate flattening) */}
+        {/* Authentic 3D Bottle - Continuous unified model from Hero through Showcase */}
         <motion.div
           className="abs"
           style={{
             inset: 0,
-            opacity: isShowcase,
+            opacity: bOp,
             pointerEvents: "none",
             zIndex: 5,
           }}
         >
-          <Bottle3D rotation={bSpin} tilt={bRot} />
-        </motion.div>
-
-        {/* Hero bottle (instant, crisp, high-res) */}
-        <motion.div
-          className="abs"
-          style={{
-            left: "50%",
-            top: 0,
-            width: 0,
-            height: 0,
-            x: bXt,
-            y: bYt,
-            opacity: isHero,
-            zIndex: 5,
-          }}
-        >
-          <motion.div
-            style={{
-              position: "relative",
-              width: bWt,
-              height: bHt,
-              transform: "translateX(-50%)",
-              filter: "drop-shadow(0 2.5vh 3vh rgba(40,10,20,0.25))",
-            }}
-          >
-            <Bottle kind="gruner" isOpen={false} />
-          </motion.div>
+          <Bottle3D rotation={bSpin} tilt={bTilt} />
         </motion.div>
 
         {/* pour */}
